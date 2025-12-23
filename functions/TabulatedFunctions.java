@@ -175,5 +175,50 @@ public final class TabulatedFunctions {
             throw new RuntimeException("Error reading tabulated function from reader", e);
         }
     }
+    public static TabulatedFunction inputTabulatedFunction(Class<? extends TabulatedFunction> functionClass, InputStream in) {
+        try (DataInputStream dis = new DataInputStream(in)) {
+            int pointsCount = dis.readInt();
+            if (pointsCount < 2) {
+                throw new IllegalArgumentException("Invalid data: points count must be at least 2");
+            }
+            FunctionPoint[] points = new FunctionPoint[pointsCount];
+            for (int i = 0; i < pointsCount; i++) {
+                double x = dis.readDouble();
+                double y = dis.readDouble();
+                points[i] = new FunctionPoint(x, y);
+            }
+            return createTabulatedFunction(functionClass, points);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading tabulated function from stream", e);
+        }
+    }
 
+    public static TabulatedFunction readTabulatedFunction(Class<? extends TabulatedFunction> functionClass, Reader in) {
+        try {
+            StreamTokenizer tokenizer = new StreamTokenizer(in);
+            tokenizer.parseNumbers();
+            if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                throw new IllegalArgumentException("Expected number of points");
+            }
+            int pointsCount = (int) tokenizer.nval;
+            if (pointsCount < 2) {
+                throw new IllegalArgumentException("Points count must be at least 2");
+            }
+            FunctionPoint[] points = new FunctionPoint[pointsCount];
+            for (int i = 0; i < pointsCount; i++) {
+                if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                    throw new IllegalArgumentException("Expected X coordinate");
+                }
+                double x = tokenizer.nval;
+                if (tokenizer.nextToken() != StreamTokenizer.TT_NUMBER) {
+                    throw new IllegalArgumentException("Expected Y coordinate");
+                }
+                double y = tokenizer.nval;
+                points[i] = new FunctionPoint(x, y);
+            }
+            return createTabulatedFunction(functionClass, points);
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading tabulated function from reader", e);
+        }
+    }
 }
